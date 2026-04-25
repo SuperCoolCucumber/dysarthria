@@ -1,0 +1,2 @@
+setting,task,model,accuracy,precision,recall,f1
+intra_dataset_test,binary,wav2vec2,0.8888550754040712,0.9219225945171117,0.9302146892655367,0.9260500798668136
