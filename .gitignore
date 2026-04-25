@@ -30,3 +30,4 @@ data/
 .codex
 
 .DS_Store
+*.ipynb

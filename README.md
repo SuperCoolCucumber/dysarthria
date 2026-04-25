@@ -1,6 +1,6 @@
 # Automatic Dysarthria Detection and Severity Classification
 
-This repository turns the original Colab notebook into a runnable project for local development and Slurm execution. The notebook logic has been decomposed into Python modules under `src/dysarthria_detection/`, Hydra-style YAML configs under `config/`, and Slurm entrypoints under `slurm/`.
+This repository provides a runnable project for local development and Slurm execution. The pipeline is organized into Python modules under `src/dysarthria_detection/`, Hydra-style YAML configs under `config/`, and Slurm entrypoints under `slurm/`.
 
 ## Layout
 
@@ -10,8 +10,7 @@ This repository turns the original Colab notebook into a runnable project for lo
 ├── scripts/
 ├── slurm/
 ├── src/dysarthria_detection/
-├── example.slurm
-└── main-1.ipynb
+└── example.slurm
 ```
 
 Core modules:
@@ -46,7 +45,7 @@ Notes:
 - The code targets Python `3.12`.
 - `torch` / `torchaudio` wheel selection can be cluster-specific. If your Slurm cluster requires a CUDA-specific wheel set, install the matching PyTorch build inside `.venv` before training.
 - wav2vec2 weights come from Hugging Face by default. On a restricted cluster, pre-populate the cache and then run with `wav2vec.local_files_only=true`.
-- The repository now also supports the Kaggle download path used in [`dysarthria_pipeline_(1).ipynb`](/home/daria.galimzianova/dysarthria/dysarthria_pipeline_(1).ipynb:1).
+- The repository supports direct Kaggle download and dataset root discovery.
 
 ## Configuration
 
@@ -74,7 +73,7 @@ Useful overrides:
 
 ## Kaggle download workflow
 
-The repository can now download the same Kaggle datasets used in the added notebook:
+The repository can download the following Kaggle datasets directly:
 
 - TORGO: `pranaykoppula/torgo-audio`
 - UA Speech: `aryashah2k/noise-reduced-uaspeech-dysarthria-dataset`
@@ -122,7 +121,7 @@ You can run the project in one of two ways:
    `audio_path`, `dataset`, `binary_label`, `severity_label`, `speaker_id`
 2. Point `data.torgo_root` and `data.ua_root` at extracted dataset directories and let the project infer labels from paths
 
-The path-based inference mirrors the notebook logic. If you care about research-quality severity labels, use curated metadata.
+The path-based inference is heuristic. If you care about research-quality severity labels, use curated metadata.
 
 ## Outputs
 
@@ -151,7 +150,3 @@ export KAGGLE_USERNAME=...
 export KAGGLE_KEY=...
 sbatch --export=KAGGLE_DOWNLOAD=true,DATA_ROOT=/path/to/shared/kaggle_cache slurm/full_pipeline.slurm
 ```
-
-## Provenance
-
-The original imported notebooks remain in the repository as [`main-1.ipynb`](/home/daria.galimzianova/dysarthria/main-1.ipynb:1) and [`dysarthria_pipeline_(1).ipynb`](/home/daria.galimzianova/dysarthria/dysarthria_pipeline_(1).ipynb:1). The project structure preserves their baseline, wav2vec2, cross-dataset, interpretability, reporting, and now Kaggle-download flow while making the pipeline scriptable and cluster-friendly.

@@ -71,10 +71,10 @@ Build an end-to-end pipeline for automatic dysarthria detection (binary) and sev
 
 ## Limitations
 - Path-derived labels are only a heuristic unless you provide a curated metadata CSV.
-- The imported notebook design keeps the held-out split small for practicality rather than exhaustive model selection.
+- The held-out split is designed for practical experimentation rather than exhaustive model selection.
 - Severity classes can be sparse and inconsistent across packaged dataset variants.
 - {severity_note_text if severity_note_text else "Severity labels may be approximate in some UA Speech packages."}
 
 ## Conclusion
-This repository now provides a reproducible, cluster-oriented project structure around the original notebook logic. For publication-grade experiments, the next step should be curated metadata and a stricter train/validation/test protocol.
+This repository provides a reproducible, cluster-oriented project structure for dysarthria experiments. For publication-grade experiments, the next step should be curated metadata and a stricter train/validation/test protocol.
 """
