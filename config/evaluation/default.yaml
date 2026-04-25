@@ -1,0 +1,9 @@
+enable_interpretability: false
+perm_n_repeats: 1
+perm_max_samples: 1500
+perm_n_jobs: -1
+
+saliency_window_ms: 50
+
+enable_attention_maps: true
+attention_num_samples: 1

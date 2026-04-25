@@ -1,0 +1,8 @@
+n_mfcc: 40
+oversample: true
+
+svm:
+  kernel: rbf
+  c: 5.0
+  gamma: scale
+  class_weight: balanced

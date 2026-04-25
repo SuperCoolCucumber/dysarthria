@@ -1,0 +1,42 @@
+[project]
+name = "dysarthria-detection"
+version = "0.1.0"
+description = "Automatic Dysarthria Detection and Severity Classification"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "accelerate>=1.13.0",
+    "hydra-core>=1.3.2",
+    "imbalanced-learn>=0.14.1",
+    "joblib>=1.5.3",
+    "kaggle>=1.7.4.5",
+    "librosa>=0.11.0",
+    "matplotlib>=3.10.8",
+    "numpy>=2.4.4",
+    "pandas>=3.0.2",
+    "safetensors>=0.7.0",
+    "scikit-learn>=1.8.0",
+    "seaborn>=0.13.2",
+    "soundfile>=0.13.1",
+    "torch==2.7.1",
+    "torchaudio==2.7.1",
+    "tqdm>=4.67.3",
+    "transformers>=5.5.4",
+]
+
+[project.scripts]
+dysarthria-detection = "dysarthria_detection.cli:main"
+dysarthria-download = "dysarthria_detection.downloads:main"
+
+[build-system]
+requires = ["uv_build>=0.11.2,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchaudio = { index = "pytorch-cu128" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true

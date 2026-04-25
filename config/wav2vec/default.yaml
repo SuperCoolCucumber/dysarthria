@@ -1,0 +1,32 @@
+checkpoint: facebook/wav2vec2-base
+cache_dir: null
+local_files_only: false
+
+attn_implementation: eager
+
+batch_size: 8
+eval_batch_size: 8
+num_workers: 0
+prefetch_factor: 2
+persistent_workers: false
+pin_memory: true
+use_amp: true
+amp_dtype: fp16
+gradient_accumulation_steps: 1
+
+epochs_binary: 3
+epochs_severity: 3
+
+lr_base: 2.0e-5
+lr_ref_batch_size: 4
+auto_scale_lr_with_batch: true
+lr: 2.0e-5
+weight_decay: 0.01
+warmup_ratio: 0.1
+
+freeze_feature_encoder: true
+freeze_encoder_layers: 6
+
+attention_dropout: 0.1
+hidden_dropout: 0.1
+feat_proj_dropout: 0.1

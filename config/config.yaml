@@ -1,0 +1,26 @@
+defaults:
+  - data: default
+  - audio: default
+  - baseline: default
+  - wav2vec: default
+  - evaluation: default
+  - outputs: default
+  - _self_
+
+experiment:
+  name: full_pipeline
+
+seed: 42
+
+tasks:
+  run_baseline: true
+  run_wav2vec: true
+  run_wav2vec_binary: true
+  run_wav2vec_severity: true
+  run_cross_dataset: true
+  generate_report: true
+
+runtime:
+  device: auto
+  strict_cuda_check: true
+  suppress_warnings: true
