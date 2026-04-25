@@ -9,8 +9,7 @@ This repository provides a runnable project for local development and Slurm exec
 ├── config/
 ├── scripts/
 ├── slurm/
-├── src/dysarthria_detection/
-└── example.slurm
+└── src/dysarthria_detection/
 ```
 
 Core modules:
