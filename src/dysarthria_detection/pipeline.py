@@ -63,15 +63,23 @@ def run_pipeline(cfg: DictConfig, device: str) -> dict[str, Any]:
         _save_dataframe(run_paths.metadata_dir / "metadata.csv", metadata_df)
 
     splits = prepare_splits(metadata_df, cfg.data, seed=int(cfg.seed))
-    print(f"\nBinary train/test sizes: {len(splits['train_df'])} / {len(splits['test_df'])}")
-    print(f"Severity train/test sizes: {len(splits['sev_train_df'])} / {len(splits['sev_test_df'])}")
+    print(
+        f"\nBinary train/val/test sizes: "
+        f"{len(splits['train_df'])} / {len(splits['val_df'])} / {len(splits['test_df'])}"
+    )
+    print(
+        f"Severity train/val/test sizes: "
+        f"{len(splits['sev_train_df'])} / {len(splits['sev_val_df'])} / {len(splits['sev_test_df'])}"
+    )
     if splits["severity_note"]:
         print(f"[severity] {splits['severity_note']}")
 
     if bool(cfg.outputs.save_split_csvs):
         _save_dataframe(run_paths.metadata_dir / "train_binary.csv", splits["train_df"])
+        _save_dataframe(run_paths.metadata_dir / "val_binary.csv", splits["val_df"])
         _save_dataframe(run_paths.metadata_dir / "test_binary.csv", splits["test_df"])
         _save_dataframe(run_paths.metadata_dir / "train_severity.csv", splits["sev_train_df"])
+        _save_dataframe(run_paths.metadata_dir / "val_severity.csv", splits["sev_val_df"])
         _save_dataframe(run_paths.metadata_dir / "test_severity.csv", splits["sev_test_df"])
 
     baseline_results: dict[str, Any] = {}
@@ -86,6 +94,7 @@ def run_pipeline(cfg: DictConfig, device: str) -> dict[str, Any]:
     if run_baseline:
         baseline_results["binary"] = run_baseline_task(
             train_df=splits["train_df"],
+            val_df=splits["val_df"],
             test_df=splits["test_df"],
             label_col="binary_label",
             average_mode="binary",
@@ -98,6 +107,7 @@ def run_pipeline(cfg: DictConfig, device: str) -> dict[str, Any]:
         if run_wav2vec_severity or bool(cfg.tasks.run_cross_dataset):
             baseline_results["severity"] = run_baseline_task(
                 train_df=splits["sev_train_df"],
+                val_df=splits["sev_val_df"],
                 test_df=splits["sev_test_df"],
                 label_col="severity_label",
                 average_mode="macro",
@@ -127,31 +137,38 @@ def run_pipeline(cfg: DictConfig, device: str) -> dict[str, Any]:
                 dump(baseline_results["severity"]["model"], run_paths.models_dir / "baseline_severity.joblib")
 
         clean_train_df = baseline_results["binary"]["train_df"]
+        clean_val_df = baseline_results["binary"]["val_df"]
         clean_test_df = baseline_results["binary"]["test_df"]
         clean_sev_train_df = baseline_results.get("severity", {}).get("train_df", splits["sev_train_df"])
+        clean_sev_val_df = baseline_results.get("severity", {}).get("val_df", splits["sev_val_df"])
         clean_sev_test_df = baseline_results.get("severity", {}).get("test_df", splits["sev_test_df"])
     elif run_wav2vec:
         clean_train_df = _clean_split_for_wav2vec(splits["train_df"], cfg, "binary wav2vec train")
+        clean_val_df = _clean_split_for_wav2vec(splits["val_df"], cfg, "binary wav2vec val")
         clean_test_df = _clean_split_for_wav2vec(splits["test_df"], cfg, "binary wav2vec test")
         if run_wav2vec_severity:
             clean_sev_train_df = _clean_split_for_wav2vec(splits["sev_train_df"], cfg, "severity wav2vec train")
+            clean_sev_val_df = _clean_split_for_wav2vec(splits["sev_val_df"], cfg, "severity wav2vec val")
             clean_sev_test_df = _clean_split_for_wav2vec(splits["sev_test_df"], cfg, "severity wav2vec test")
         else:
             clean_sev_train_df = splits["sev_train_df"]
+            clean_sev_val_df = splits["sev_val_df"]
             clean_sev_test_df = splits["sev_test_df"]
     else:
         clean_train_df = splits["train_df"]
+        clean_val_df = splits["val_df"]
         clean_test_df = splits["test_df"]
         clean_sev_train_df = splits["sev_train_df"]
+        clean_sev_val_df = splits["sev_val_df"]
         clean_sev_test_df = splits["sev_test_df"]
 
     if run_wav2vec_binary:
-        if clean_train_df.empty or clean_test_df.empty:
+        if clean_train_df.empty or clean_val_df.empty or clean_test_df.empty:
             raise RuntimeError("Binary wav2vec split is empty after filtering unreadable audio.")
 
         binary_model, binary_train_log = train_one_task(
             train_df=clean_train_df,
-            valid_df=clean_test_df,
+            valid_df=clean_val_df,
             label_col="binary_label",
             num_labels=2,
             epochs=int(cfg.wav2vec.epochs_binary),
@@ -191,15 +208,20 @@ def run_pipeline(cfg: DictConfig, device: str) -> dict[str, Any]:
             raise RuntimeError(
                 "No valid severity samples were found. Provide curated metadata or adjust the UA severity mapping."
             )
-        if clean_sev_train_df.empty or clean_sev_test_df.empty:
+        if clean_sev_train_df.empty or clean_sev_val_df.empty or clean_sev_test_df.empty:
             raise RuntimeError("Severity wav2vec split is empty after filtering unreadable audio.")
 
         severity_num_labels = int(
-            max(clean_sev_train_df["severity_label"].max(), clean_sev_test_df["severity_label"].max()) + 1
+            max(
+                clean_sev_train_df["severity_label"].max(),
+                clean_sev_val_df["severity_label"].max(),
+                clean_sev_test_df["severity_label"].max(),
+            )
+            + 1
         )
         severity_model, severity_train_log = train_one_task(
             train_df=clean_sev_train_df,
-            valid_df=clean_sev_test_df,
+            valid_df=clean_sev_val_df,
             label_col="severity_label",
             num_labels=severity_num_labels,
             epochs=int(cfg.wav2vec.epochs_severity),

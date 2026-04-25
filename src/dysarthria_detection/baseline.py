@@ -72,6 +72,18 @@ def make_feature_matrix(
 
 
 def build_svm_pipeline(baseline_cfg: Any) -> Pipeline:
+    return build_svm_pipeline_with_params(
+        baseline_cfg,
+        c=float(baseline_cfg.svm.c),
+        gamma=str(baseline_cfg.svm.gamma),
+    )
+
+
+def build_svm_pipeline_with_params(
+    baseline_cfg: Any,
+    c: float,
+    gamma: str,
+) -> Pipeline:
     return Pipeline(
         [
             ("scaler", StandardScaler()),
@@ -79,8 +91,8 @@ def build_svm_pipeline(baseline_cfg: Any) -> Pipeline:
                 "clf",
                 SVC(
                     kernel=str(baseline_cfg.svm.kernel),
-                    C=float(baseline_cfg.svm.c),
-                    gamma=str(baseline_cfg.svm.gamma),
+                    C=float(c),
+                    gamma=str(gamma),
                     class_weight=str(baseline_cfg.svm.class_weight),
                 ),
             ),
@@ -88,8 +100,29 @@ def build_svm_pipeline(baseline_cfg: Any) -> Pipeline:
     )
 
 
+def _candidate_values(value: Any, fallback: Any) -> list[Any]:
+    if value is None:
+        return [fallback]
+    if isinstance(value, (list, tuple)):
+        return list(value) or [fallback]
+    return [value]
+
+
+def _apply_oversampling(
+    x: np.ndarray,
+    y: np.ndarray,
+    oversample: bool,
+    seed: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    if not oversample:
+        return x, y
+    sampler = RandomOverSampler(random_state=seed)
+    return sampler.fit_resample(x, y)
+
+
 def run_baseline_task(
     train_df: pd.DataFrame,
+    val_df: pd.DataFrame,
     test_df: pd.DataFrame,
     label_col: str,
     average_mode: str,
@@ -100,29 +133,83 @@ def run_baseline_task(
     return_test_features: bool = False,
 ) -> dict[str, Any]:
     x_train, aligned_train = make_feature_matrix(train_df, audio_cfg, baseline_cfg, desc=f"{desc_prefix} train")
+    if val_df.empty:
+        x_val = np.empty((0, x_train.shape[1]), dtype=np.float32)
+        aligned_val = val_df.reset_index(drop=True)
+    else:
+        x_val, aligned_val = make_feature_matrix(val_df, audio_cfg, baseline_cfg, desc=f"{desc_prefix} val")
     x_test, aligned_test = make_feature_matrix(test_df, audio_cfg, baseline_cfg, desc=f"{desc_prefix} test")
     y_train = aligned_train[label_col].to_numpy()
+    y_val = aligned_val[label_col].to_numpy()
     y_test = aligned_test[label_col].to_numpy()
 
     if np.unique(y_train).size < 2:
         raise RuntimeError(f"{label_col} training split has fewer than two classes after filtering unreadable audio.")
+    if len(y_val) > 0 and np.unique(y_val).size < 2:
+        print(f"[run_baseline_task] {label_col} validation split has fewer than two classes after filtering.")
 
-    x_train_fit = x_train
-    y_train_fit = y_train
-    if bool(baseline_cfg.oversample):
-        sampler = RandomOverSampler(random_state=seed)
-        x_train_fit, y_train_fit = sampler.fit_resample(x_train, y_train)
+    selection_metric = str(getattr(baseline_cfg, "selection_metric", "f1"))
+    c_candidates = [float(value) for value in _candidate_values(getattr(baseline_cfg.svm, "c_candidates", None), baseline_cfg.svm.c)]
+    gamma_candidates = [
+        str(value) for value in _candidate_values(getattr(baseline_cfg.svm, "gamma_candidates", None), baseline_cfg.svm.gamma)
+    ]
 
-    model = build_svm_pipeline(baseline_cfg)
-    model.fit(x_train_fit, y_train_fit)
+    if len(y_val) > 0:
+        best_score = -np.inf
+        best_params: dict[str, Any] | None = None
+        best_val_metrics: dict[str, float] | None = None
+        for c_value in c_candidates:
+            for gamma_value in gamma_candidates:
+                x_train_fit, y_train_fit = _apply_oversampling(
+                    x_train,
+                    y_train,
+                    oversample=bool(baseline_cfg.oversample),
+                    seed=seed,
+                )
+                candidate_model = build_svm_pipeline_with_params(baseline_cfg, c=c_value, gamma=gamma_value)
+                candidate_model.fit(x_train_fit, y_train_fit)
+                y_val_pred = candidate_model.predict(x_val)
+                val_metrics = metric_bundle(y_val.tolist(), y_val_pred.tolist(), average=average_mode)
+                score = float(val_metrics.get(selection_metric, np.nan))
+                if np.isnan(score):
+                    score = -np.inf
+                if score > best_score:
+                    best_score = score
+                    best_params = {"c": c_value, "gamma": gamma_value}
+                    best_val_metrics = val_metrics
+
+        if best_params is None or best_val_metrics is None:
+            raise RuntimeError("Baseline model selection failed to produce a valid validation score.")
+        x_trainval = np.vstack([x_train, x_val])
+        y_trainval = np.concatenate([y_train, y_val])
+    else:
+        best_params = {"c": float(baseline_cfg.svm.c), "gamma": str(baseline_cfg.svm.gamma)}
+        best_val_metrics = {}
+        x_trainval = x_train
+        y_trainval = y_train
+    x_trainval_fit, y_trainval_fit = _apply_oversampling(
+        x_trainval,
+        y_trainval,
+        oversample=bool(baseline_cfg.oversample),
+        seed=seed,
+    )
+    model = build_svm_pipeline_with_params(
+        baseline_cfg,
+        c=float(best_params["c"]),
+        gamma=str(best_params["gamma"]),
+    )
+    model.fit(x_trainval_fit, y_trainval_fit)
     y_pred = model.predict(x_test)
     result = {
         "model": model,
         "metrics": metric_bundle(y_test.tolist(), y_pred.tolist(), average=average_mode),
+        "val_metrics": best_val_metrics,
+        "best_params": best_params,
         "y_true": y_test.tolist(),
         "y_pred": y_pred.tolist(),
         "report_text": build_classification_report(y_test.tolist(), y_pred.tolist()),
         "train_df": aligned_train,
+        "val_df": aligned_val,
         "test_df": aligned_test,
     }
     if return_test_features:
@@ -143,6 +230,7 @@ def run_cross_eval_baseline(
     train_df, test_df = cross_dataset_split(df, train_ds, test_ds)
     result = run_baseline_task(
         train_df=train_df,
+        val_df=test_df.iloc[0:0].copy(),
         test_df=test_df,
         label_col=label_col,
         average_mode=average_mode,

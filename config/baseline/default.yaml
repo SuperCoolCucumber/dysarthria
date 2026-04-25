@@ -1,8 +1,16 @@
 n_mfcc: 40
 oversample: true
+selection_metric: f1
 
 svm:
   kernel: rbf
   c: 5.0
   gamma: scale
   class_weight: balanced
+  c_candidates:
+    - 1.0
+    - 5.0
+    - 10.0
+  gamma_candidates:
+    - scale
+    - auto

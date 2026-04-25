@@ -19,6 +19,8 @@ outputs/
 slurm_out/*
 slurm_err/*
 data/
+!config/data/
+!config/data/*.yaml
 *.pt
 *.joblib
 *.png

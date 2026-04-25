@@ -1,0 +1,41 @@
+torgo_root: data/torgo
+ua_root: data/ua_speech
+ua_control_root: null
+metadata_csv: null
+
+auto_discover_dataset_paths: false
+dataset_search_roots: []
+dataset_search_max_depth: 6
+
+download:
+  enabled: false
+  root_dir: data/kaggle
+  force: false
+  credentials_json: null
+  torgo_slug: pranaykoppula/torgo-audio
+  ua_slug: aryashah2k/noise-reduced-uaspeech-dysarthria-dataset
+
+max_samples_per_dataset: null
+val_ratio: 0.1
+test_ratio: 0.2
+
+severity_expected_num_classes: 4
+severity_split_max_tries: 40
+severity_allow_collapse_4_to_3: true
+
+ua_speaker_severity_map:
+  M01: 0
+  M04: 0
+  M05: 0
+  F02: 0
+  M07: 1
+  M08: 1
+  M09: 1
+  F03: 1
+  M10: 2
+  M11: 2
+  M12: 2
+  F04: 2
+  M14: 3
+  M16: 3
+  F05: 3
