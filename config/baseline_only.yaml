@@ -1,0 +1,30 @@
+defaults:
+  - data: default
+  - audio: default
+  - baseline: default
+  - wav2vec: default
+  - evaluation: default
+  - outputs: default
+  - _self_
+
+experiment:
+  name: baseline_only
+
+seed: 42
+
+tasks:
+  run_baseline: true
+  run_wav2vec: false
+  run_wav2vec_binary: false
+  run_wav2vec_severity: false
+  run_cross_dataset: true
+  generate_report: true
+
+runtime:
+  device: cpu
+  strict_cuda_check: false
+  suppress_warnings: true
+
+outputs:
+  root_dir: outputs
+  run_name: baseline_only
