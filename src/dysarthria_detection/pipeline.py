@@ -31,6 +31,25 @@ def _save_dataframe(path: Path, df: pd.DataFrame) -> None:
     df.to_csv(path, index=False)
 
 
+def _save_test_predictions(
+    path: Path,
+    df: pd.DataFrame,
+    label_col: str,
+    y_true: list[int],
+    y_pred: list[int],
+) -> None:
+    prediction_df = df.reset_index(drop=True).copy()
+    if len(prediction_df) != len(y_true) or len(prediction_df) != len(y_pred):
+        raise RuntimeError(
+            f"Cannot save predictions for {label_col}: "
+            f"{len(prediction_df)} rows, {len(y_true)} labels, {len(y_pred)} predictions."
+        )
+    prediction_df["y_true"] = y_true
+    prediction_df["y_pred"] = y_pred
+    prediction_df["is_correct"] = prediction_df["y_true"] == prediction_df["y_pred"]
+    _save_dataframe(path, prediction_df)
+
+
 def _clean_split_for_wav2vec(df: pd.DataFrame, cfg: DictConfig, desc: str) -> pd.DataFrame:
     return drop_unreadable_audio_rows(
         df,
@@ -126,10 +145,24 @@ def run_pipeline(cfg: DictConfig, device: str) -> dict[str, Any]:
             run_paths.reports_dir / "baseline_binary_classification_report.txt",
             baseline_results["binary"]["report_text"],
         )
+        _save_test_predictions(
+            run_paths.tables_dir / "baseline_binary_test_predictions.csv",
+            baseline_results["binary"]["test_df"],
+            "binary_label",
+            baseline_results["binary"]["y_true"],
+            baseline_results["binary"]["y_pred"],
+        )
         if "severity" in baseline_results:
             save_text(
                 run_paths.reports_dir / "baseline_severity_classification_report.txt",
                 baseline_results["severity"]["report_text"],
+            )
+            _save_test_predictions(
+                run_paths.tables_dir / "baseline_severity_test_predictions.csv",
+                baseline_results["severity"]["test_df"],
+                "severity_label",
+                baseline_results["severity"]["y_true"],
+                baseline_results["severity"]["y_pred"],
             )
         if bool(cfg.outputs.save_models):
             dump(baseline_results["binary"]["model"], run_paths.models_dir / "baseline_binary.joblib")
@@ -200,6 +233,13 @@ def run_pipeline(cfg: DictConfig, device: str) -> dict[str, Any]:
             run_paths.reports_dir / "wav2vec_binary_classification_report.txt",
             wav2vec_results["binary"]["report_text"],
         )
+        _save_test_predictions(
+            run_paths.tables_dir / "wav2vec_binary_test_predictions.csv",
+            clean_test_df,
+            "binary_label",
+            binary_eval["y_true"],
+            binary_eval["y_pred"],
+        )
         if bool(cfg.outputs.save_models):
             torch.save(binary_model.state_dict(), run_paths.models_dir / "wav2vec2_binary_best.pt")
 
@@ -253,6 +293,13 @@ def run_pipeline(cfg: DictConfig, device: str) -> dict[str, Any]:
         save_text(
             run_paths.reports_dir / "wav2vec_severity_classification_report.txt",
             wav2vec_results["severity"]["report_text"],
+        )
+        _save_test_predictions(
+            run_paths.tables_dir / "wav2vec_severity_test_predictions.csv",
+            clean_sev_test_df,
+            "severity_label",
+            severity_eval["y_true"],
+            severity_eval["y_pred"],
         )
         if bool(cfg.outputs.save_models):
             torch.save(severity_model.state_dict(), run_paths.models_dir / "wav2vec2_severity_best.pt")

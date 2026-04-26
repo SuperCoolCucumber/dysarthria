@@ -149,10 +149,14 @@ def run_baseline_task(
         print(f"[run_baseline_task] {label_col} validation split has fewer than two classes after filtering.")
 
     selection_metric = str(getattr(baseline_cfg, "selection_metric", "f1"))
-    c_candidates = [float(value) for value in _candidate_values(getattr(baseline_cfg.svm, "c_candidates", None), baseline_cfg.svm.c)]
-    gamma_candidates = [
-        str(value) for value in _candidate_values(getattr(baseline_cfg.svm, "gamma_candidates", None), baseline_cfg.svm.gamma)
-    ]
+    c_candidates_raw = getattr(baseline_cfg.svm, "c_candidates", None)
+    gamma_candidates_raw = getattr(baseline_cfg.svm, "gamma_candidates", None)
+    if c_candidates_raw is None:
+        c_candidates_raw = [baseline_cfg.svm.c]
+    if gamma_candidates_raw is None:
+        gamma_candidates_raw = [baseline_cfg.svm.gamma]
+    c_candidates = [float(value) for value in list(c_candidates_raw)]
+    gamma_candidates = [str(value) for value in list(gamma_candidates_raw)]
 
     if len(y_val) > 0:
         best_score = -np.inf

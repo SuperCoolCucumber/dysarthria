@@ -1,0 +1,59 @@
+defaults:
+  - data: default
+  - audio: default
+  - baseline: default
+  - wav2vec: default
+  - evaluation: default
+  - outputs: default
+  - _self_
+
+experiment:
+  name: wavlm_large_binary_a100
+
+seed: 42
+
+tasks:
+  run_baseline: false
+  run_wav2vec: true
+  run_wav2vec_binary: true
+  run_wav2vec_severity: false
+  run_cross_dataset: false
+  generate_report: true
+
+runtime:
+  device: cuda
+  strict_cuda_check: false
+  suppress_warnings: true
+
+audio:
+  target_sr: 16000
+  max_audio_sec: 5.0
+
+evaluation:
+  enable_interpretability: false
+  enable_attention_maps: false
+
+wav2vec:
+  checkpoint: microsoft/wavlm-large
+  attn_implementation: auto
+  batch_size: 8
+  eval_batch_size: 16
+  num_workers: 8
+  prefetch_factor: 4
+  persistent_workers: true
+  pin_memory: true
+  use_amp: true
+  amp_dtype: bf16
+  gradient_accumulation_steps: 2
+  epochs_binary: 3
+  auto_scale_lr_with_batch: true
+  lr_base: 2.0e-5
+  lr_ref_batch_size: 4
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  freeze_feature_encoder: true
+  freeze_encoder_layers: 6
+
+outputs:
+  root_dir: outputs
+  run_name: wavlm_large_binary_a100

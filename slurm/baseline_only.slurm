@@ -6,10 +6,9 @@
 #SBATCH --mem=64G
 #SBATCH --error=./slurm_err/%J.err
 #SBATCH --output=./slurm_out/%J.out
-#SBATCH -p cscc-gpu-p
-#SBATCH -q cscc-gpu-qos
-#SBATCH --time=24:00:00
-#SBATCH --gres=gpu:1
+#SBATCH -p cscc-cpu-p
+#SBATCH -q cscc-cpu-qos
+#SBATCH --time=72:00:00
 
 set -eu
 
