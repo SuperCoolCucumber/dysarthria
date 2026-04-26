@@ -1,0 +1,50 @@
+{
+  "run_dir": "/home/daria.galimzianova/dysarthria/outputs/wav2vec2_severity_a100_7396_slurm7396",
+  "device": "cuda",
+  "severity_note": "Severity split could not include all 3 classes in train, validation, and test despite retries; severity metrics should be interpreted cautiously.",
+  "baseline": {},
+  "wav2vec": {
+    "severity": {
+      "metrics": {
+        "accuracy": 0.1007843137254902,
+        "precision": 0.1731076322137103,
+        "recall": 0.09906629318394027,
+        "f1": 0.09989223485846159
+      },
+      "train_log": {
+        "history": [
+          {
+            "epoch": 1.0,
+            "train_loss": 0.14881823863618843,
+            "val_loss": 3.5850875014916825,
+            "accuracy": 0.3616892911010558,
+            "precision": 0.16310253832400784,
+            "recall": 0.2248262267870111,
+            "f1": 0.18528633056918534
+          },
+          {
+            "epoch": 2.0,
+            "train_loss": 0.021565880834650657,
+            "val_loss": 5.646332942689649,
+            "accuracy": 0.3271995977878331,
+            "precision": 0.1436581412809864,
+            "recall": 0.2028114949683577,
+            "f1": 0.16731063764275478
+          },
+          {
+            "epoch": 3.0,
+            "train_loss": 0.00727863539274566,
+            "val_loss": 5.979873067293411,
+            "accuracy": 0.31241830065359477,
+            "precision": 0.153408811925846,
+            "recall": 0.19491648511256354,
+            "f1": 0.1688534555643285
+          }
+        ],
+        "best_f1": 0.18528633056918534,
+        "backbone": "wav2vec2-base"
+      }
+    }
+  },
+  "cross_results_metrics_only": {}
+}

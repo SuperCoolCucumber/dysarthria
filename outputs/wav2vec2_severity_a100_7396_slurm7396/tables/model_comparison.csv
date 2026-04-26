@@ -1,0 +1,2 @@
+setting,task,model,accuracy,precision,recall,f1
+intra_dataset_test,severity,wav2vec2,0.1007843137254902,0.1731076322137103,0.09906629318394027,0.09989223485846159

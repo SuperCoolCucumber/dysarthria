@@ -1,0 +1,112 @@
+data:
+  torgo_root: /home/daria.galimzianova/dysarthria/data/kaggle/TORGO
+  ua_root: /home/daria.galimzianova/dysarthria/data/kaggle/UA_Speech
+  ua_control_root: null
+  metadata_csv: null
+  auto_discover_dataset_paths: false
+  dataset_search_roots: []
+  dataset_search_max_depth: 6
+  download:
+    enabled: false
+    root_dir: /home/daria.galimzianova/dysarthria/data/kaggle
+    force: false
+    credentials_json: null
+    torgo_slug: pranaykoppula/torgo-audio
+    ua_slug: aryashah2k/noise-reduced-uaspeech-dysarthria-dataset
+  max_samples_per_dataset: null
+  val_ratio: 0.1
+  test_ratio: 0.2
+  severity_expected_num_classes: 4
+  severity_split_max_tries: 40
+  severity_allow_collapse_4_to_3: true
+  ua_speaker_severity_map:
+    M01: 0
+    M04: 0
+    M05: 0
+    F02: 0
+    M07: 1
+    M08: 1
+    M09: 1
+    F03: 1
+    M10: 2
+    M11: 2
+    M12: 2
+    F04: 2
+    M14: 3
+    M16: 3
+    F05: 3
+audio:
+  target_sr: 16000
+  max_audio_sec: 5.0
+baseline:
+  n_mfcc: 40
+  oversample: true
+  selection_metric: f1
+  svm:
+    kernel: rbf
+    c: 5.0
+    gamma: scale
+    class_weight: balanced
+    c_candidates:
+    - 1.0
+    - 5.0
+    - 10.0
+    gamma_candidates:
+    - scale
+    - auto
+wav2vec:
+  checkpoint: microsoft/wavlm-base-plus
+  cache_dir: null
+  local_files_only: false
+  attn_implementation: auto
+  batch_size: 32
+  eval_batch_size: 64
+  num_workers: 8
+  prefetch_factor: 4
+  persistent_workers: true
+  pin_memory: true
+  use_amp: true
+  amp_dtype: bf16
+  gradient_accumulation_steps: 1
+  epochs_binary: 3
+  epochs_severity: 3
+  lr_base: 2.0e-05
+  lr_ref_batch_size: 4
+  auto_scale_lr_with_batch: true
+  lr: 2.0e-05
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  freeze_feature_encoder: true
+  freeze_encoder_layers: 6
+  attention_dropout: 0.1
+  hidden_dropout: 0.1
+  feat_proj_dropout: 0.1
+evaluation:
+  enable_interpretability: false
+  perm_n_repeats: 1
+  perm_max_samples: 1500
+  perm_n_jobs: -1
+  saliency_window_ms: 50
+  enable_attention_maps: false
+  attention_num_samples: 1
+outputs:
+  root_dir: outputs
+  run_name: wavlm_base_plus_severity_a100_7397
+  append_slurm_job_id: true
+  save_metadata: true
+  save_split_csvs: true
+  save_models: true
+experiment:
+  name: wavlm_base_plus_severity_a100
+seed: 42
+tasks:
+  run_baseline: false
+  run_wav2vec: true
+  run_wav2vec_binary: false
+  run_wav2vec_severity: true
+  run_cross_dataset: false
+  generate_report: true
+runtime:
+  device: cuda
+  strict_cuda_check: false
+  suppress_warnings: true

@@ -1,0 +1,54 @@
+{
+  "run_dir": "/home/daria.galimzianova/dysarthria/outputs/baseline_only_7414_slurm7414",
+  "device": "cpu",
+  "severity_note": "Severity split could not include all 3 classes in train, validation, and test despite retries; severity metrics should be interpreted cautiously.",
+  "baseline": {
+    "binary": {
+      "metrics": {
+        "accuracy": 0.7217488334347738,
+        "precision": 0.8920550727908814,
+        "recall": 0.7145310734463277,
+        "f1": 0.7934850804326549
+      }
+    },
+    "severity": {
+      "metrics": {
+        "accuracy": 0.2396078431372549,
+        "precision": 0.3054565557594883,
+        "recall": 0.2301172320780164,
+        "f1": 0.18416780632904484
+      }
+    }
+  },
+  "wav2vec": {},
+  "cross_results_metrics_only": {
+    "TORGO_to_UA": {
+      "baseline_binary": {
+        "accuracy": 0.5143136297020029,
+        "precision": 0.5142619501932579,
+        "recall": 0.9986698337292161,
+        "f1": 0.6789174525255135
+      },
+      "baseline_severity": {
+        "accuracy": NaN,
+        "precision": NaN,
+        "recall": NaN,
+        "f1": NaN
+      }
+    },
+    "UA_to_TORGO": {
+      "baseline_binary": {
+        "accuracy": 0.35036868973340896,
+        "precision": 0.35031485788846656,
+        "recall": 0.9998380829015544,
+        "f1": 0.5188421627525942
+      },
+      "baseline_severity": {
+        "accuracy": NaN,
+        "precision": NaN,
+        "recall": NaN,
+        "f1": NaN
+      }
+    }
+  }
+}
